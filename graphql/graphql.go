@@ -265,6 +265,9 @@ type ExtendedError interface {
 type Response struct {
 	Data   *interface{} `json:"data,omitempty"`
 	Errors []*Error     `json:"errors,omitempty"`
+
+	// If this response is returned via HTTP, these headers will be added.
+	HTTPHeaders map[string]string `json:"-"`
 }
 
 // IsSubscription returns true if the operation with the given name is a subscription operation.

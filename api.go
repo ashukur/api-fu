@@ -250,12 +250,16 @@ func (api *API) ServeGraphQL(w http.ResponseWriter, r *http.Request) {
 		execute = PersistedQueryExtension(storage, execute)
 	}
 
-	body, err := jsoniter.Marshal(execute(req))
+	resp := execute(req)
+	body, err := jsoniter.Marshal(resp)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	for k, v := range resp.HTTPHeaders {
+		w.Header().Add(k, v)
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
 	w.Write(body)

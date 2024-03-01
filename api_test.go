@@ -214,3 +214,30 @@ func TestMutation(t *testing.T) {
 	require.NoError(t, err)
 	assert.JSONEq(t, `{"data":{"mut":true}}`, string(body))
 }
+
+func TestResponseHeaders(t *testing.T) {
+	testCfg := Config{}
+
+	testCfg.AddQueryField("test", &graphql.FieldDefinition{
+		Type:    graphql.IntType,
+		Resolve: func(ctx graphql.FieldContext) (interface{}, error) { return 1, nil },
+	})
+
+	testCfg.Execute = func(*graphql.Request, *RequestInfo) *graphql.Response {
+		return &graphql.Response{
+			HTTPHeaders: map[string]string{"X-Test": "foo"},
+		}
+	}
+
+	api, err := NewAPI(&testCfg)
+	require.NoError(t, err)
+
+	resp := executeGraphQL(t, api, `{test}`)
+
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	body, err := ioutil.ReadAll(resp.Body)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{}`, string(body))
+	assert.Equal(t, "foo", resp.Header.Get("X-Test"))
+}
